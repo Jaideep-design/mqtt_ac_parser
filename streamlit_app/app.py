@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import streamlit as st
 
-from .dictionary_utils import excel_to_json
+from dictionary_utils import excel_to_json
 
 # Backend base URL – set this in Streamlit Cloud as an environment variable
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8000")
