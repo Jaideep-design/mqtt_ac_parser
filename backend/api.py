@@ -7,6 +7,14 @@ from pydantic import BaseModel
 from .shared_state import get_latest_data
 from .mqtt_worker import configure_and_start_mqtt
 
+
+print("🔎 Listing project root:")
+print(os.listdir("/opt/render/project/src"))
+
+print("🔎 Listing backend folder:")
+print(os.listdir("/opt/render/project/src/backend"))
+
+
 # Optional: defaults from env vars
 DEFAULT_BROKER = os.getenv("MQTT_BROKER", "ecozen.ai")
 DEFAULT_PORT = int(os.getenv("MQTT_PORT", "1883"))
