@@ -60,23 +60,28 @@ def excel_to_json(uploaded_file):
     for _, row in df.iterrows():
         if pd.isna(row["Short name"]) or pd.isna(row["Index"]):
             continue
-
+    
         fmt = str(row["Data format"]).strip().upper()
         if fmt == "BINARY":
             fmt = "BIN"
-
-        offset_val = 0
-        if "Offset" in df.columns and pd.notnull(row["Offset"]):
-            offset_val = row["Offset"]
-
+    
+        # FIX: Handle NaN scaling and offset
+        sc = row.get("Scaling factor")
+        if pd.isna(sc):
+            sc = 1.0
+    
+        off = row.get("Offset")
+        if pd.isna(off):
+            off = 0.0
+    
         reg = {
             "short_name": str(row["Short name"]).strip().upper(),
             "index": int(row["Index"]),
             "size": int(row["Size [byte]"]),
             "format": fmt,
             "signed": str(row.get("Signed/Unsigned", "U")).strip().upper() == "S",
-            "scaling": float(row.get("Scaling factor", 1.0)),
-            "offset": float(offset_val),
+            "scaling": float(sc),
+            "offset": float(off),
         }
 
         ok, err = validate_register(reg)
