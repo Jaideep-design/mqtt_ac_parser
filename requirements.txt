@@ -1,0 +1,9 @@
+streamlit
+pandas
+openpyxl
+jsonschema
+paho-mqtt
+fastapi
+uvicorn[standard]
+requests
+python-dotenv
