@@ -8,7 +8,7 @@ from dictionary_utils import excel_to_json
 
 # Backend base URL – set this in Streamlit Cloud as an environment variable
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8000")
-
+st.write("Backend URL =", BACKEND_BASE_URL)
 st.set_page_config(page_title="AC MQTT Live Parser", layout="wide")
 
 st.title("📡 AC Dictionary → JSON → Live MQTT Parser (Frontend)")
