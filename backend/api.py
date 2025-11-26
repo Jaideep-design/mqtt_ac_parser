@@ -20,6 +20,9 @@ class ConfigurePayload(BaseModel):
     broker: str | None = None
     port: int | None = None
 
+@app.get("/")
+def root():
+    return {"status": "backend ok"}
 
 @app.get("/health")
 def health():
