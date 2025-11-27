@@ -42,7 +42,7 @@ for key, value in DEFAULTS.items():
 st.subheader("Dictionary & MQTT Configuration")
 
 # col_a, col_b = st.columns(2)
-col_a = st.columns(1)
+col_a, = st.columns(1)
 with col_a:
     st.session_state.device_id = st.text_input(
         "Device ID",
