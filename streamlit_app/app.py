@@ -22,8 +22,8 @@ st.title("📡 AC Dictionary → JSON → Live MQTT Parser")
 # session_state initialization
 # ------------------------------------------------------------------------------
 DEFAULTS = {
-    "device_id": "EZMCSACD00001",
-    "topic": "/AC/2/EZMCSACD00001/Datalog",
+    "device_id": "EZMCISAC00097",
+    "topic": "/AC/1/EZMCISAC00097/Datalog",
     "broker": "ecozen.ai",
     "port": 1883,
     "registers": None,
@@ -51,7 +51,7 @@ with col_a:
 
     st.session_state.topic = st.text_input(
         "MQTT Subscriber Topic",
-        value=f"/AC/2/{st.session_state.device_id}/Datalog",
+        value=f"/AC/1/{st.session_state.device_id}/Datalog",
     )
 
 # with col_b:
