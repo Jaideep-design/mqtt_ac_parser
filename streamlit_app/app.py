@@ -41,8 +41,8 @@ for key, value in DEFAULTS.items():
 # ------------------------------------------------------------------------------
 st.subheader("Dictionary & MQTT Configuration")
 
-col_a, col_b = st.columns(2)
-
+# col_a, col_b = st.columns(2)
+col_a = st.columns(1)
 with col_a:
     st.session_state.device_id = st.text_input(
         "Device ID",
@@ -54,16 +54,16 @@ with col_a:
         value=f"/AC/2/{st.session_state.device_id}/Datalog",
     )
 
-with col_b:
-    st.session_state.broker = st.text_input(
-        "MQTT Broker",
-        value=st.session_state.broker
-    )
-    st.session_state.port = st.number_input(
-        "MQTT Port",
-        value=st.session_state.port,
-        step=1
-    )
+# with col_b:
+#     st.session_state.broker = st.text_input(
+#         "MQTT Broker",
+#         value=st.session_state.broker
+#     )
+#     st.session_state.port = st.number_input(
+#         "MQTT Port",
+#         value=st.session_state.port,
+#         step=1
+#     )
 
 uploaded_excel = st.file_uploader("Upload Dictionary Excel", type=["xlsx"])
 
