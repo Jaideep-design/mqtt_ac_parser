@@ -132,7 +132,7 @@ auto_refresh = st.checkbox("🔄 Auto-refresh every 5 seconds")
 
 # Only refresh this section, not entire script
 if auto_refresh:
-    st.autorefresh(interval=5000, key="mqtt_autorefresh")
+    st_autorefresh(interval=5000, key="mqtt_autorefresh")
 
 col1, col2 = st.columns([1, 2])
 
