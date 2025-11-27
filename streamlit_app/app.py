@@ -178,7 +178,6 @@ with col2:
             # Create IST timestamp
             timestamp_ist = (
                 pd.Timestamp.utcnow()
-                .tz_localize("UTC")
                 .tz_convert("Asia/Kolkata")
             )
 
