@@ -12,8 +12,8 @@ from dictionary_utils import excel_to_json
 # ------------------------------------------------------------------------------
 st.set_page_config(page_title="AC MQTT Live Parser", layout="wide")
 
-BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8000")
-st.write("Backend URL =", BACKEND_BASE_URL)
+# BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8000")
+# st.write("Backend URL =", BACKEND_BASE_URL)
 
 st.title("📡 AC Dictionary → JSON → Live MQTT Parser")
 
@@ -205,17 +205,21 @@ with col2:
 # SHOW HISTORY
 # ------------------------------------------------------------------------------
 st.markdown("---")
-st.subheader("📜 History of Parsed Messages (auto-growing, IST timestamps)")
+st.subheader("📜 History of Parsed Messages (latest first, IST timestamps)")
 
 if st.session_state.history:
     # Concatenate all rows into a single df
     history_df = pd.concat(st.session_state.history, ignore_index=True)
 
-    # Ensure timestamp stays the FIRST column
+    # Ensure timestamp stays first column
     cols = ["timestamp"] + [c for c in history_df.columns if c != "timestamp"]
     history_df = history_df[cols]
+
+    # Show latest message at TOP
+    history_df = history_df.iloc[::-1].reset_index(drop=True)
 
     st.dataframe(history_df)
 
 else:
     st.info("No history available yet.")
+
