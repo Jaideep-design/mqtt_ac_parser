@@ -3,7 +3,7 @@ import json
 import requests
 import pandas as pd
 import streamlit as st
-
+from streamlit_autorefresh import st_autorefresh
 from dictionary_utils import excel_to_json
 
 
