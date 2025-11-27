@@ -5,6 +5,9 @@ import pandas as pd
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 from dictionary_utils import excel_to_json
+from collections import deque
+if "history" not in st.session_state:
+    st.session_state.history = deque(maxlen=2000)
 
 
 # ------------------------------------------------------------------------------
@@ -201,25 +204,52 @@ with col2:
         st.info("Click 'Manual Refresh Latest Message' to fetch current data.")
 
 
+# # ------------------------------------------------------------------------------
+# # SHOW HISTORY
+# # ------------------------------------------------------------------------------
+# st.markdown("---")
+# st.subheader("📜 History of Parsed Messages (latest first, IST timestamps)")
+
+# if st.session_state.history:
+#     # Concatenate all rows into a single df
+#     history_df = pd.concat(st.session_state.history, ignore_index=True)
+
+#     # Ensure timestamp stays first column
+#     cols = ["timestamp"] + [c for c in history_df.columns if c != "timestamp"]
+#     history_df = history_df[cols]
+
+#     # Show latest message at TOP
+#     history_df = history_df.iloc[::-1].reset_index(drop=True)
+
+#     st.dataframe(history_df)
+
+# else:
+#     st.info("No history available yet.")
+
 # ------------------------------------------------------------------------------
-# SHOW HISTORY
+# SHOW HISTORY (Decreasing order, capped, IST timestamps)
 # ------------------------------------------------------------------------------
 st.markdown("---")
-st.subheader("📜 History of Parsed Messages (latest first, IST timestamps)")
+st.subheader("📜 History of Parsed Messages")
 
 if st.session_state.history:
-    # Concatenate all rows into a single df
-    history_df = pd.concat(st.session_state.history, ignore_index=True)
+    # Convert deque → list → dataframe
+    history_df = pd.concat(list(st.session_state.history), ignore_index=True)
 
-    # Ensure timestamp stays first column
+    # Ensure timestamp remains FIRST column
     cols = ["timestamp"] + [c for c in history_df.columns if c != "timestamp"]
     history_df = history_df[cols]
 
-    # Show latest message at TOP
+    # Sort newest → oldest
     history_df = history_df.iloc[::-1].reset_index(drop=True)
 
-    st.dataframe(history_df)
+    # Show only last 50 rows in the UI for performance
+    # display_df = history_df.head(50)
+
+    # st.caption("Showing latest 50 rows (full history stored up to 2000 rows).")
+    st.dataframe(history_df, use_container_width=True)
 
 else:
     st.info("No history available yet.")
+
 
