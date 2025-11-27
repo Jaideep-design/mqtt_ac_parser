@@ -130,12 +130,10 @@ st.header("Live Data Viewer")
 
 auto_refresh = st.checkbox("🔄 Auto-refresh every 5 seconds")
 
-# Only refresh this section, not entire script
 if auto_refresh:
     st_autorefresh(interval=5000, key="mqtt_autorefresh")
 
 col1, col2 = st.columns([1, 2])
-
 
 with col1:
     if st.button("Manual Refresh Latest Message"):
@@ -148,8 +146,7 @@ with col1:
         except Exception as e:
             st.error(f"Could not reach backend: {e}")
 
-
-# If auto-refresh is ON, fetch latest automatically
+# Auto-refresh handling
 if auto_refresh:
     try:
         resp = requests.get(f"{BACKEND_BASE_URL}/latest", timeout=5)
@@ -159,7 +156,6 @@ if auto_refresh:
             st.error(f"Backend error {resp.status_code}: {resp.text}")
     except Exception as e:
         st.error(f"Could not reach backend: {e}")
-
 
 with col2:
     latest = st.session_state.latest_data
@@ -172,12 +168,32 @@ with col2:
 
         if parsed_rows:
             df = pd.DataFrame(parsed_rows)
-            st.subheader("🧩 Latest Parsed Message")
-            st.dataframe(df)
+
+            # Only keep Short name and Value
+            df_reduced = df[['Short name', 'Value']].copy()
+
+            # Transpose: shortnames -> columns
+            df_transposed = df_reduced.set_index("Short name").T
+
+            # Create IST timestamp
+            timestamp_ist = (
+                pd.Timestamp.utcnow()
+                .tz_localize("UTC")
+                .tz_convert("Asia/Kolkata")
+            )
+
+            # Insert timestamp as first column
+            df_transposed.insert(0, "timestamp", timestamp_ist)
+
+            st.subheader("🧩 Latest Parsed Message (Cleaned, Transposed, IST Time)")
+            st.dataframe(df_transposed)
 
             # Add to history if new
-            if not st.session_state.history or st.session_state.history[-1] != parsed_rows:
-                st.session_state.history.append(parsed_rows)
+            if not st.session_state.history:
+                st.session_state.history.append(df_transposed)
+            else:
+                if not df_transposed.equals(st.session_state.history[-1]):
+                    st.session_state.history.append(df_transposed)
 
         else:
             st.info("No parsed data yet – waiting for MQTT messages.")
@@ -190,11 +206,17 @@ with col2:
 # SHOW HISTORY
 # ------------------------------------------------------------------------------
 st.markdown("---")
-st.subheader("📜 History of Parsed Messages (auto-growing)")
+st.subheader("📜 History of Parsed Messages (auto-growing, IST timestamps)")
 
 if st.session_state.history:
-    for i, msg in enumerate(reversed(st.session_state.history[-20:])):  # last 20 msgs
-        st.write(f"### Message #{len(st.session_state.history)-i}")
-        st.dataframe(pd.DataFrame(msg))
+    # Concatenate all rows into a single df
+    history_df = pd.concat(st.session_state.history, ignore_index=True)
+
+    # Ensure timestamp stays the FIRST column
+    cols = ["timestamp"] + [c for c in history_df.columns if c != "timestamp"]
+    history_df = history_df[cols]
+
+    st.dataframe(history_df)
+
 else:
     st.info("No history available yet.")
