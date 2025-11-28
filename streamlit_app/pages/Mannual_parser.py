@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 from dictionary_utils import excel_to_json
-from mqtt_parser import parse_packet     # <-- your parse_packet() function
+from parser_logic import parse_packet     # <-- your parse_packet() function
 
 
 st.set_page_config(page_title="Manual Raw Hex Parser", layout="wide")
