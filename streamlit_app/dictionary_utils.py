@@ -98,13 +98,29 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
     for _, row in df.iterrows():
 
         # Skip empty or invalid rows
-        if pd.isna(row["Short name"]) or pd.isna(row["Index"]):
+        if (
+            pd.isna(row["Short name"])
+            or pd.isna(row["Index"])
+            or pd.isna(row["Size [byte]"])
+        ):
             continue
 
         # Normalize format
         fmt = str(row["Data format"]).strip().upper()
-        if fmt == "BINARY":
-            fmt = "BIN"
+
+        format_map = {
+            "BINARY": "BIN",
+            "BIN": "BIN",
+            "HEX": "HEX",
+            "DEC": "DEC",
+            "DECIMAL": "DEC",
+            "ASCII": "ASCII",
+        }
+        
+        if fmt not in format_map:
+            raise ValueError(f"Unsupported data format: {fmt}")
+        
+        fmt = format_map[fmt]
 
         # Scaling factor defaults
         scaling = row.get("Scaling factor")
