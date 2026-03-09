@@ -95,7 +95,7 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
 
     registers = []
 
-    for _, row in df.iterrows():
+    for row in df.to_dict("records"):
 
         # Skip empty or invalid rows
         if (
