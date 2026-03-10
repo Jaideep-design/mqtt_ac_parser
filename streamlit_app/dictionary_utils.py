@@ -124,19 +124,20 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
         fmt = format_map[fmt]
 
         # Convert Index (Excel 1-based → Python 0-based)
-        start = int(row["Index"]) - 1
-
-        # Determine size
+        start_excel = int(row["Index"])
+        start = start_excel - 1
+        
         if fmt == "ASCII":
-
+        
             if pd.isna(row["Total Upto"]):
                 raise ValueError(f"Missing 'Total Upto' for ASCII register {short_name}")
-
-            end = int(row["Total Upto"])
-            size = end - start
-
+        
+            end_excel = int(row["Total Upto"])
+        
+            size = end_excel - start_excel + 1
+        
         else:
-            # numeric formats use byte length
+        
             byte_size = int(row["Size [byte]"])
             size = byte_size * 2
 
