@@ -27,34 +27,50 @@ def validate_registers(registers: List[Dict[str, Any]]):
         validate_register(reg)
 
 
-def parse_value(raw_segment: str, fmt: str, scaling: float, offset: float):
+def parse_value(raw_segment: str, fmt: str, signed: bool, scaling: float, offset: float):
 
-    if raw_segment is None or raw_segment == "":
+    if raw_segment is None or raw_segment.strip() == "":
         return None
 
     raw_segment = raw_segment.strip()
 
-    # ASCII text
+    # ASCII
     if fmt == "ASCII":
         return raw_segment
 
-    try:
-        numeric_val = float(raw_segment)
-        final_val = (numeric_val * scaling) + offset
+    # HEX (return raw)
+    if fmt == "HEX":
+        return raw_segment.upper()
 
-        if final_val == int(final_val):
-            return int(final_val)
-        else:
-            return round(final_val, 4)
-
-    except ValueError:
-
-        # fallback HEX parsing
+    # BIN
+    if fmt == "BIN":
         try:
-            numeric_val = int(raw_segment, 16)
-            return (numeric_val * scaling) + offset
+            num = int(raw_segment, 16)
+            return bin(num)[2:]
         except:
             return raw_segment
+
+    # DEC (HEX → integer → scaling)
+    if fmt == "DEC":
+        try:
+            num = int(raw_segment, 16)
+
+            if signed:
+                bits = len(raw_segment) * 4
+                if num >= 2**(bits-1):
+                    num -= 2**bits
+
+            value = (num * scaling) + offset
+
+            if value == int(value):
+                return int(value)
+
+            return round(value, 4)
+
+        except:
+            return raw_segment
+
+    return raw_segment
 
 
 def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
