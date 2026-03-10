@@ -96,7 +96,7 @@ def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
         scaling = float(reg["scaling"])
         offset = float(reg["offset"])
 
-        converted_value = parse_value(raw_segment, fmt, signed, scaling, offset)
+        converted_value = parse_value(segment, fmt, signed, scaling, offset)
 
         rows.append(
             {
