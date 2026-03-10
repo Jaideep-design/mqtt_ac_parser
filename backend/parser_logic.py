@@ -2,6 +2,7 @@ import jsonschema
 from jsonschema import validate
 from typing import List, Dict, Any
 
+
 # JSON schema for a single register entry
 REGISTER_SCHEMA = {
     "type": "object",
@@ -17,71 +18,77 @@ REGISTER_SCHEMA = {
     "required": ["short_name", "index", "size", "format", "signed", "scaling", "offset"],
 }
 
+
 def validate_register(reg: Dict[str, Any]):
     """Validate a register dict against the schema."""
     validate(instance=reg, schema=REGISTER_SCHEMA)
+
 
 def validate_registers(registers: List[Dict[str, Any]]):
     for reg in registers:
         validate_register(reg)
 
-def parse_value(raw_hex: str, fmt: str, signed: bool, scaling: float, offset: float):
+
+def parse_value(raw_segment: str, fmt: str, signed: bool, scaling: float, offset: float):
     """
-    Convert raw hex substring into final interpreted value.
-    raw_hex: string of hex chars (e.g. '0A1B')
-    fmt: ASCII / DEC / HEX / BIN
+    Convert ASCII substring into interpreted value.
     """
 
-    if raw_hex is None or raw_hex == "":
+    if raw_segment is None or raw_segment == "":
         return None
 
-    hex_clean = raw_hex.replace(" ", "")
+    raw_segment = raw_segment.strip()
 
     # ------------------------
-    # ASCII
+    # ASCII (literal text)
     # ------------------------
     if fmt == "ASCII":
-        try:
-            # convert hex → bytes → ASCII
-            b = bytes.fromhex(hex_clean)
-            return b.decode("ascii", errors="ignore").strip()
-        except:
-            return raw_hex
+        return raw_segment
 
     # ------------------------
-    # BIN (convert hex to 8-bit binary string)
+    # Binary
     # ------------------------
     if fmt in ["BIN", "BINARY"]:
         try:
-            b = bytes.fromhex(hex_clean)
-            return ''.join(f"{x:08b}" for x in b)
+            num = int(raw_segment)
+            return bin(num)[2:]
         except:
-            return raw_hex
+            return raw_segment
 
     # ------------------------
-    # DEC (hex → decimal, scaled)
+    # Decimal ASCII
     # ------------------------
     if fmt == "DEC":
         try:
-            b = bytes.fromhex(hex_clean)
-            num = int.from_bytes(b, byteorder="big", signed=signed)
-            return num * scaling + offset
-        except:
-            return raw_hex
+            numeric_val = float(raw_segment)
+            final_val = (numeric_val * scaling) + offset
+
+            if final_val == int(final_val):
+                return int(final_val)
+            else:
+                return round(final_val, 4)
+
+        except ValueError:
+            # Try HEX fallback
+            try:
+                numeric_val = int(raw_segment, 16)
+                final_val = (numeric_val * scaling) + offset
+                return final_val
+            except:
+                return raw_segment
 
     # ------------------------
-    # HEX (return cleaned hex)
+    # HEX (return uppercase)
     # ------------------------
     if fmt == "HEX":
-        return hex_clean.upper()
+        return raw_segment.upper()
 
-    # DEFAULT fallback
-    return raw_hex
+    return raw_segment
+
 
 def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
     """
-    Parse a raw packet string using the register dictionary.
-    Each register extracts a substring (index:size) and converts it.
+    Parse an ASCII packet string using register dictionary.
     """
 
     rows = []
@@ -89,17 +96,16 @@ def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
     if raw_packet is None:
         return rows
 
-    # Remove whitespace from MQTT packet
-    raw_packet = raw_packet.replace(" ", "").strip()
+    raw_packet = raw_packet.strip()
 
     for reg in registers:
 
-        idx = int(reg["index"])
+        start = int(reg["index"])
         size = int(reg["size"])
+        end = start + size
 
-        # Extract substring directly (dictionary indexes are character positions)
-        if 0 <= idx < len(raw_packet):
-            segment = raw_packet[idx: idx + size]
+        if 0 <= start < len(raw_packet):
+            segment = raw_packet[start:end]
         else:
             segment = ""
 
