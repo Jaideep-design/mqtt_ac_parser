@@ -93,9 +93,10 @@ def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
             segment = ""
 
         fmt = str(reg["format"]).upper()
+        signed = bool(reg["signed"])
         scaling = float(reg["scaling"])
         offset = float(reg["offset"])
-
+        
         converted_value = parse_value(segment, fmt, signed, scaling, offset)
 
         rows.append(
