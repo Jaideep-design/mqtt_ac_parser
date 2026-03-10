@@ -76,7 +76,11 @@ def validate_register(reg: Dict[str, Any]):
 def validate_register_list(registers: List[Dict[str, Any]]):
     validate(instance=registers, schema=LIST_SCHEMA)
 
-
+def validate_registers(registers: List[Dict[str, Any]]):
+    """Validate all registers in the dictionary."""
+    for reg in registers:
+        validate_register(reg)
+        
 # ---------------------------------------------------------------------------
 # Convert Excel dictionary → JSON register list
 # ---------------------------------------------------------------------------
