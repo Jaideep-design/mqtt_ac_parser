@@ -81,7 +81,7 @@ def parse_value(raw_hex: str, fmt: str, signed: bool, scaling: float, offset: fl
 def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
     """
     Parse a raw packet string using the register dictionary.
-    Uses the same logic as the working ASCII parser.
+    Each register extracts a substring (index:size) and converts it.
     """
 
     rows = []
@@ -89,72 +89,36 @@ def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
     if raw_packet is None:
         return rows
 
-    # Remove whitespace from MQTT payload
+    # Remove whitespace from MQTT packet
     raw_packet = raw_packet.replace(" ", "").strip()
 
     for reg in registers:
 
-        try:
-            short_name = reg["short_name"]
+        idx = int(reg["index"])
+        size = int(reg["size"])
 
-            start = int(reg["index"])
-            end = start + int(reg["size"])
+        # Extract substring directly (dictionary indexes are character positions)
+        if 0 <= idx < len(raw_packet):
+            segment = raw_packet[idx: idx + size]
+        else:
+            segment = ""
 
-            # Extract raw substring
-            raw_segment = raw_packet[start:end].strip()
+        fmt = str(reg["format"]).upper()
+        signed = bool(reg["signed"])
+        scaling = float(reg["scaling"])
+        offset = float(reg["offset"])
 
-            if not raw_segment:
-                rows.append(
-                    {
-                        "Short name": short_name,
-                        "Raw": "",
-                        "format": reg["format"],
-                        "scaling": reg["scaling"],
-                        "offset": reg["offset"],
-                        "Value": None,
-                    }
-                )
-                continue
+        converted_value = parse_value(segment, fmt, signed, scaling, offset)
 
-            data_format = str(reg["format"]).upper()
-            scaling = float(reg["scaling"])
-            offset = float(reg["offset"])
-
-            # ASCII fields
-            if data_format == "ASCII":
-                final_val = raw_segment
-
-            else:
-                # Attempt decimal conversion first
-                try:
-                    numeric_val = float(raw_segment)
-                    final_val = (numeric_val * scaling) + offset
-
-                    if final_val == int(final_val):
-                        final_val = int(final_val)
-                    else:
-                        final_val = round(final_val, 4)
-
-                except ValueError:
-                    # Try hex conversion
-                    try:
-                        numeric_val = int(raw_segment, 16)
-                        final_val = (numeric_val * scaling) + offset
-                    except:
-                        final_val = raw_segment
-
-            rows.append(
-                {
-                    "Short name": short_name,
-                    "Raw": raw_segment,
-                    "format": data_format,
-                    "scaling": scaling,
-                    "offset": offset,
-                    "Value": final_val,
-                }
-            )
-
-        except Exception:
-            continue
+        rows.append(
+            {
+                "Short name": reg["short_name"],
+                "Raw": segment,
+                "format": fmt,
+                "scaling": scaling,
+                "offset": offset,
+                "Value": converted_value,
+            }
+        )
 
     return rows
