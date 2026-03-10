@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import pandas as pd
 from jsonschema import validate
 from typing import List, Dict, Any
@@ -152,6 +150,3 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
         registers.append(reg)
 
     return registers
-
-
-  
