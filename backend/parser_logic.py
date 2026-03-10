@@ -81,18 +81,30 @@ def parse_value(raw_hex: str, fmt: str, signed: bool, scaling: float, offset: fl
 def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
     """
     Parse a raw packet string using the register dictionary.
-    Each register extracts a substring (index:size) and converts it.
+    Each register extracts a substring using byte offsets and converts it.
     """
+
     rows = []
+
     if raw_packet is None:
         return rows
 
-    for reg in registers:
-        idx = int(reg["index"])
-        size = int(reg["size"])
+    # Remove whitespace that may appear in MQTT payload logs
+    raw_packet = raw_packet.replace(" ", "").strip()
 
-        # Extract raw hex segment
-        segment = raw_packet[idx : idx + size] if 0 <= idx < len(raw_packet) else ""
+    for reg in registers:
+        byte_idx = int(reg["index"])
+        byte_size = int(reg["size"])
+
+        # Convert byte offsets → hex character offsets
+        char_idx = byte_idx * 2
+        char_size = byte_size * 2
+
+        # Extract raw hex segment safely
+        if 0 <= char_idx < len(raw_packet):
+            segment = raw_packet[char_idx : char_idx + char_size]
+        else:
+            segment = ""
 
         fmt = str(reg["format"]).upper()
         signed = bool(reg["signed"])
