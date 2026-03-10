@@ -81,14 +81,11 @@ def validate_register_list(registers: List[Dict[str, Any]]):
 # Convert Excel dictionary → JSON register list
 # ---------------------------------------------------------------------------
 def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
-    """
-    Convert an Excel dictionary sheet into a list of validated register dicts.
-    Normalizes formats, handles missing values, and enforces schema.
-    """
 
     df = normalize_excel_headers(uploaded_file)
 
-    required_cols = ["Short name", "Index", "Size [byte]", "Data format"]
+    required_cols = ["Short name", "Index", "Total Upto", "Size [byte]", "Data format"]
+
     for col in required_cols:
         if col not in df.columns:
             raise ValueError(f"Missing required column in dictionary: {col}")
@@ -97,15 +94,15 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
 
     for row in df.to_dict("records"):
 
-        # Skip empty or invalid rows
         if (
             pd.isna(row["Short name"])
             or pd.isna(row["Index"])
-            or pd.isna(row["Size [byte]"])
         ):
             continue
 
-        # Normalize format
+        short_name = str(row["Short name"]).strip().upper()
+
+        # Convert format
         fmt = str(row["Data format"]).strip().upper()
 
         format_map = {
@@ -116,48 +113,57 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
             "DECIMAL": "DEC",
             "ASCII": "ASCII",
         }
-        
+
         if fmt not in format_map:
             raise ValueError(f"Unsupported data format: {fmt}")
-        
+
         fmt = format_map[fmt]
 
-        # Scaling factor defaults
+        # Convert Index (Excel 1-based → Python 0-based)
+        start = int(row["Index"]) - 1
+
+        # Determine size
+        if fmt == "ASCII":
+
+            if pd.isna(row["Total Upto"]):
+                raise ValueError(f"Missing 'Total Upto' for ASCII register {short_name}")
+
+            end = int(row["Total Upto"])
+            size = end - start
+
+        else:
+            # numeric formats use byte length
+            byte_size = int(row["Size [byte]"])
+            size = byte_size * 2
+
+        # Scaling
         scaling = row.get("Scaling factor")
         if pd.isna(scaling):
             scaling = 1.0
 
+        # Offset
         offset = row.get("Offset")
         if pd.isna(offset):
             offset = 0.0
 
-        # Convert Signed/Unsigned → boolean
+        # Signed flag
         signed_raw = str(row.get("Signed/Unsigned", "U")).strip().upper()
-        signed_flag = (signed_raw == "S")
+        signed_flag = signed_raw == "S"
 
-        # Build register dict
         reg = {
-            "short_name": str(row["Short name"]).strip().upper(),
-            "index": int(row["Index"]),
-            "size": int(row["Size [byte]"]),
+            "short_name": short_name,
+            "index": start,
+            "size": int(size),
             "format": fmt,
             "signed": signed_flag,
             "scaling": float(scaling),
             "offset": float(offset),
         }
 
-        # Validate individual register
-        try:
-            validate_register(reg)
-        except Exception as e:
-            raise ValueError(f"Register validation failed for {reg['short_name']}: {e}")
+        validate_register(reg)
 
         registers.append(reg)
 
-    # Validate entire list
-    try:
-        validate_register_list(registers)
-    except Exception as e:
-        raise ValueError(f"Dictionary validation failed: {e}")
+    validate_registers(registers)
 
     return registers
