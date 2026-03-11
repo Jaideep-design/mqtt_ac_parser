@@ -8,13 +8,13 @@ REGISTER_SCHEMA = {
     "properties": {
         "short_name": {"type": "string"},
         "index": {"type": "integer", "minimum": 0},
-        "size": {"type": "integer", "minimum": 1},
+        "total_upto": {"type": "integer", "minimum": 1},
         "format": {"type": "string", "enum": ["ASCII", "DEC", "HEX", "BIN"]},
         "signed": {"type": "boolean"},
         "scaling": {"type": "number"},
         "offset": {"type": "number"}
     },
-    "required": ["short_name", "index", "size", "format", "signed", "scaling", "offset"],
+    "required": ["short_name", "index", "total_upto", "format", "signed", "scaling", "offset"],
 }
 
 def validate_register(reg: Dict[str, Any]):
