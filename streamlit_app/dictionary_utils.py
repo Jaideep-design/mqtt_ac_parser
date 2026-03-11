@@ -106,7 +106,7 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
     for _, row in df.iterrows():
 
         # Skip empty or invalid rows
-        if pd.isna(row["Short name"]) or pd.isna(row["Index"]) or pd.isna(row["Total Upto"]):
+        if pd.isna(row["Short name"]) or pd.isna(row["Index"]) or pd.isna(row["Total upto"]):
             continue
 
         # Normalize format
