@@ -1,75 +1,58 @@
-import pandas as pd
+import jsonschema
+from jsonschema import validate
+from typing import List, Dict, Any
 
-def parse_packet(raw, registers):
+# JSON schema for a single register entry
+REGISTER_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "short_name": {"type": "string"},
+        "index": {"type": "integer", "minimum": 0},
+        "size": {"type": "integer", "minimum": 1},
+        "format": {"type": "string", "enum": ["ASCII", "DEC", "HEX", "BIN"]},
+        "signed": {"type": "boolean"},
+        "scaling": {"type": "number"},
+        "offset": {"type": "number"}
+    },
+    "required": ["short_name", "index", "size", "format", "signed", "scaling", "offset"],
+}
 
-    # Accept both list-of-dicts and dataframe
-    if isinstance(registers, list):
-        df = pd.DataFrame(registers)
-    else:
-        df = registers.copy()
+def validate_register(reg: Dict[str, Any]):
+    """Validate a register dict against the schema."""
+    validate(instance=reg, schema=REGISTER_SCHEMA)
 
-    df.columns = df.columns.str.strip()
-    df['Total Upto'] = pd.to_numeric(df['Total Upto'], errors='coerce')
-    df = df.dropna(subset=['Index', 'Total Upto'])
+def validate_registers(registers: List[Dict[str, Any]]):
+    for reg in registers:
+        validate_register(reg)
 
-    # Ensure packet length matches dictionary layout
-    df['Total Upto'] = pd.to_numeric(df['Total Upto'], errors='coerce')
-    required_length = int(df['Total Upto'].dropna().max())
+def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
+    """
+    Parse a raw packet string using a list of register dicts.
+    For now we implement a simple extraction:
+      - Take substring raw_packet[index:index+size]
+      - Apply trivial 'value = raw' (placeholder for more complex conversion).
+    Returns: list of row dicts that can be turned into a DataFrame on the frontend.
+    """
+    rows = []
+    if raw_packet is None:
+        return rows
 
-    data_string = raw
-    if len(data_string) < required_length:
-        data_string = data_string.ljust(required_length)
+    for reg in registers:
+        idx = int(reg["index"])
+        size = int(reg["size"])
+        segment = raw_packet[idx : idx + size] if 0 <= idx < len(raw_packet) else ""
 
-    decoded_results = []
+        # Placeholder conversion; you can expand with actual DEC/HEX/BIN/ASCII logic
+        value = segment
 
-    for _, row in df.iterrows():
-        try:
-            short_name = str(row['Short name']).strip()
-
-            start = int(row['Index'])
-            end = int(row['Total Upto'])
-
-            raw_segment = data_string[start:end]
-
-            # If field contains only spaces
-            if raw_segment.strip() == "":
-                decoded_results.append({
-                    "Short name": short_name,
-                    "Value": "N/A",
-                    "Units": ""
-                })
-                continue
-
-            data_format = str(row['Data format']).strip()
-
-            scaling = float(row['Scaling Factor']) if pd.notnull(row['Scaling Factor']) else 1.0
-            offset = float(row['Offset']) if pd.notnull(row['Offset']) else 0.0
-            units = str(row['Units']).strip() if pd.notnull(row['Units']) else ""
-
-            if data_format == "ASCII":
-                final_val = raw_segment.strip()
-
-            else:
-                try:
-                    numeric_val = float(raw_segment.strip())
-                except ValueError:
-                    numeric_val = int(raw_segment.strip(), 16)
-
-                final_val = (numeric_val * scaling) + offset
-
-                if final_val == int(final_val):
-                    final_val = int(final_val)
-                else:
-                    final_val = round(final_val, 4)
-
-            decoded_results.append({
-                "Short name": short_name,
-                "Value": final_val,
-                "Units": units
-            })
-
-        except Exception as e:
-            print(f"Error parsing row {row.get('Short name','Unknown')}: {e}")
-            continue
-
-    return decoded_results
+        rows.append(
+            {
+                "Short name": reg["short_name"],
+                "Raw": segment,
+                "format": reg["format"],
+                "scaling": reg["scaling"],
+                "offset": reg["offset"],
+                "Value": value,
+            }
+        )
+    return rows
