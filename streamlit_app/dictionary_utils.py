@@ -96,7 +96,7 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
 
     df = normalize_excel_headers(uploaded_file)
 
-    required_cols = ["Short name", "Index", "Total Upto", "Data format"]
+    required_cols = ["Short name", "Index", "Total upto", "Data format"]
     for col in required_cols:
         if col not in df.columns:
             raise ValueError(f"Missing required column in dictionary: {col}")
