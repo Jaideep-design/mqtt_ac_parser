@@ -107,8 +107,6 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
 
             end_excel = int(float(row["Total Upto"]))
 
-            size = end_excel - start_excel + 1
-
         # --------------------------------------------------
         # Binary / Decimal / Hex registers use byte size
         # --------------------------------------------------
