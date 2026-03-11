@@ -25,96 +25,67 @@ def validate_registers(registers: List[Dict[str, Any]]):
     for reg in registers:
         validate_register(reg)
 
-def parse_value(raw_hex: str, fmt: str, signed: bool, scaling: float, offset: float):
-    """
-    Convert raw hex substring into final interpreted value.
-    raw_hex: string of hex chars (e.g. '0A1B')
-    fmt: ASCII / DEC / HEX / BIN
-    """
+def parse_value(raw_val: str, fmt: str, signed: bool, scaling: float, offset: float):
 
-    if raw_hex is None or raw_hex == "":
+    if raw_val is None or raw_val == "":
         return None
 
-    hex_clean = raw_hex.replace(" ", "")
+    raw_val = raw_val.strip()
 
-    # ------------------------
-    # ASCII
-    # ------------------------
     if fmt == "ASCII":
-        try:
-            # convert hex → bytes → ASCII
-            b = bytes.fromhex(hex_clean)
-            return b.decode("ascii", errors="ignore").strip()
-        except:
-            return raw_hex
+        return raw_val
 
-    # ------------------------
-    # BIN (convert hex to 8-bit binary string)
-    # ------------------------
-    if fmt in ["BIN", "BINARY"]:
+    if fmt == "BIN":
         try:
-            b = bytes.fromhex(hex_clean)
-            return ''.join(f"{x:08b}" for x in b)
+            num = int(raw_val, 16)
+            return format(num, 'b')
         except:
-            return raw_hex
+            return raw_val
 
-    # ------------------------
-    # DEC (hex → decimal, scaled)
-    # ------------------------
     if fmt == "DEC":
         try:
-            num = int(hex_clean, 16)
-    
-            if signed:
-                bits = len(hex_clean) * 4
-                if num >= 2 ** (bits - 1):
-                    num -= 2 ** bits
-    
-            return num * scaling + offset
-        except Exception:
-            return None
+            num = float(raw_val)
+        except:
+            try:
+                num = int(raw_val, 16)
+            except:
+                return raw_val
 
-    # ------------------------
-    # HEX (return cleaned hex)
-    # ------------------------
+        return num * scaling + offset
+
     if fmt == "HEX":
-        return hex_clean.upper()
+        return raw_val
 
-    # DEFAULT fallback
-    return raw_hex
+    return raw_val
 
-def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
+def parse_packet(raw_packet: str, registers):
 
     rows = []
 
-    if raw_packet is None:
-        return rows
+    print("Packet length:", len(raw_packet))
 
-    raw_packet = raw_packet.replace(" ", "").strip()
+    raw_packet = raw_packet.rstrip("\n")
 
     for reg in registers:
 
-        idx = int(reg["index"])
-        end = int(reg["total_upto"])
+        idx = reg["index"]
+        end = reg["total_upto"]
 
-        segment = raw_packet[idx:end] 
-        if len(segment) != (end - idx):
-            segment = None
+        segment = raw_packet[idx:end]
+        raw_segment = segment.strip()
 
-        fmt = str(reg["format"]).upper()
-        signed = bool(reg["signed"])
-        scaling = float(reg["scaling"])
-        offset = float(reg["offset"])
-
-        converted_value = parse_value(segment, fmt, signed, scaling, offset)
+        value = parse_value(
+            raw_segment,
+            reg["format"],
+            reg["signed"],
+            reg["scaling"],
+            reg["offset"]
+        )
 
         rows.append({
             "Short name": reg["short_name"],
             "Raw": segment,
-            "format": fmt,
-            "scaling": scaling,
-            "offset": offset,
-            "Value": converted_value,
+            "Value": value
         })
 
     return rows
