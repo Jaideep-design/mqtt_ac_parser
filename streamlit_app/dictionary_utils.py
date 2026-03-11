@@ -19,13 +19,21 @@ REGISTER_SCHEMA = {
     "properties": {
         "short_name": {"type": "string"},
         "index": {"type": "integer", "minimum": 0},
-        "size": {"type": "integer", "minimum": 1},
+        "total_upto": {"type": "integer", "minimum": 1},
         "format": {"type": "string", "enum": ["ASCII", "DEC", "HEX", "BIN"]},
         "signed": {"type": "boolean"},
         "scaling": {"type": "number"},
         "offset": {"type": "number"},
     },
-    "required": ["short_name", "index", "size", "format", "signed", "scaling", "offset"],
+    "required": [
+        "short_name",
+        "index",
+        "total_upto",
+        "format",
+        "signed",
+        "scaling",
+        "offset",
+    ],
 }
 
 LIST_SCHEMA = {
@@ -88,7 +96,7 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
 
     df = normalize_excel_headers(uploaded_file)
 
-    required_cols = ["Short name", "Index", "Size [byte]", "Data format"]
+    required_cols = ["Short name", "Index", "Total Upto", "Data format"]
     for col in required_cols:
         if col not in df.columns:
             raise ValueError(f"Missing required column in dictionary: {col}")
@@ -98,7 +106,7 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
     for _, row in df.iterrows():
 
         # Skip empty or invalid rows
-        if pd.isna(row["Short name"]) or pd.isna(row["Index"]):
+        if pd.isna(row["Short name"]) or pd.isna(row["Index"]) or pd.isna(row["Total Upto"]):
             continue
 
         # Normalize format
@@ -123,12 +131,16 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
         reg = {
             "short_name": str(row["Short name"]).strip().upper(),
             "index": int(row["Index"]),
-            "size": int(row["Size [byte]"]),
+            "total_upto": int(row["Total Upto"]),
             "format": fmt,
             "signed": signed_flag,
             "scaling": float(scaling),
             "offset": float(offset),
         }
+        if reg["total_upto"] <= reg["index"]:
+            raise ValueError(
+                f"Invalid range for {reg['short_name']} (index >= total_upto)"
+            )
 
         # Validate individual register
         try:
