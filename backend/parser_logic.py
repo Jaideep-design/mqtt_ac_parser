@@ -79,38 +79,35 @@ def parse_value(raw_hex: str, fmt: str, signed: bool, scaling: float, offset: fl
     return raw_hex
 
 def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
-    """
-    Parse a raw packet string using the register dictionary.
-    Each register extracts a substring (index:size) and converts it.
-    """
+
     rows = []
+
     if raw_packet is None:
         return rows
 
-    for reg in registers:
-        idx = int(reg["index"])
-        size = int(reg["size"])
+    raw_packet = raw_packet.replace(" ", "").strip()
 
-        # Extract raw hex segment
-        segment = raw_packet[idx : idx + size] if 0 <= idx < len(raw_packet) else ""
+    for reg in registers:
+
+        idx = int(reg["index"])
+        end = int(reg["total_upto"])
+
+        segment = raw_packet[idx:end] if 0 <= idx < len(raw_packet) else ""
 
         fmt = str(reg["format"]).upper()
         signed = bool(reg["signed"])
         scaling = float(reg["scaling"])
         offset = float(reg["offset"])
 
-        # Convert the value properly
         converted_value = parse_value(segment, fmt, signed, scaling, offset)
 
-        rows.append(
-            {
-                "Short name": reg["short_name"],
-                "Raw": segment,
-                "format": fmt,
-                "scaling": scaling,
-                "offset": offset,
-                "Value": converted_value,
-            }
-        )
+        rows.append({
+            "Short name": reg["short_name"],
+            "Raw": segment,
+            "format": fmt,
+            "scaling": scaling,
+            "offset": offset,
+            "Value": converted_value,
+        })
 
     return rows
