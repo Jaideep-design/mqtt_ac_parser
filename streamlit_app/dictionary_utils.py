@@ -131,7 +131,7 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
         reg = {
             "short_name": str(row["Short name"]).strip().upper(),
             "index": int(row["Index"]),
-            "total_upto": int(row["Total Upto"]),
+            "total_upto": int(row["Total upto"]),
             "format": fmt,
             "signed": signed_flag,
             "scaling": float(scaling),
