@@ -95,7 +95,7 @@ def excel_to_json(uploaded_file) -> List[Dict[str, Any]]:
         fmt = format_map[fmt_raw]
 
         # Excel index is 0-based
-        start_excel = int(float(row["Index"]))
+        start = int(float(row["Index"]))
 
         # --------------------------------------------------
         # ASCII registers use Index + Total Upto
