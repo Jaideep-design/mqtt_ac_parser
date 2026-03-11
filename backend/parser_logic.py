@@ -63,11 +63,16 @@ def parse_value(raw_hex: str, fmt: str, signed: bool, scaling: float, offset: fl
     # ------------------------
     if fmt == "DEC":
         try:
-            b = bytes.fromhex(hex_clean)
-            num = int.from_bytes(b, byteorder="big", signed=signed)
+            num = int(hex_clean, 16)
+    
+            if signed:
+                bits = len(hex_clean) * 4
+                if num >= 2 ** (bits - 1):
+                    num -= 2 ** bits
+    
             return num * scaling + offset
-        except:
-            return raw_hex
+        except Exception:
+            return None
 
     # ------------------------
     # HEX (return cleaned hex)
@@ -92,7 +97,9 @@ def parse_packet(raw_packet: str, registers: List[Dict[str, Any]]):
         idx = int(reg["index"])
         end = int(reg["total_upto"])
 
-        segment = raw_packet[idx:end] if 0 <= idx < len(raw_packet) else ""
+        segment = raw_packet[idx:end] 
+        if len(segment) != (end - idx):
+            segment = None
 
         fmt = str(reg["format"]).upper()
         signed = bool(reg["signed"])
