@@ -53,7 +53,7 @@ def parse_value(raw_val: str, fmt: str, signed: bool, scaling: float, offset: fl
 
         # ✅ Apply signed logic
         if signed:
-            bits = size * 8
+            bits = len(raw_val) * 4   # FIXED
             if num >= 2**(bits - 1):
                 num -= 2**bits
 
