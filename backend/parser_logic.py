@@ -44,12 +44,9 @@ def parse_value(raw_val: str, fmt: str, signed: bool, scaling: float, offset: fl
 
     if fmt == "DEC":
         try:
-            num = int(raw_val)  # prefer int first
+            num = int(raw_val, 16)   # 👈 always hex
         except:
-            try:
-                num = int(raw_val, 16)
-            except:
-                return raw_val
+            return raw_val
 
         # ✅ Apply signed logic
         if signed:
