@@ -25,7 +25,7 @@ def validate_registers(registers: List[Dict[str, Any]]):
     for reg in registers:
         validate_register(reg)
 
-def parse_value(raw_val: str, fmt: str, signed: bool, scaling: float, offset: float):
+def parse_value(raw_val: str, fmt: str, signed: bool, scaling: float, offset: float, size: int):
 
     if raw_val is None or raw_val == "":
         return None
@@ -44,12 +44,18 @@ def parse_value(raw_val: str, fmt: str, signed: bool, scaling: float, offset: fl
 
     if fmt == "DEC":
         try:
-            num = float(raw_val)
+            num = int(raw_val)  # prefer int first
         except:
             try:
                 num = int(raw_val, 16)
             except:
                 return raw_val
+
+        # ✅ Apply signed logic
+        if signed:
+            bits = size * 8
+            if num >= 2**(bits - 1):
+                num -= 2**bits
 
         return num * scaling + offset
 
