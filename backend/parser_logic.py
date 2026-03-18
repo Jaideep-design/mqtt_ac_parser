@@ -85,7 +85,8 @@ def parse_packet(raw_packet: str, registers):
             reg["format"],
             reg["signed"],
             reg["scaling"],
-            reg["offset"]
+            reg["offset"],
+            reg["size"]   # ✅ REQUIRED
         )
 
         rows.append({
